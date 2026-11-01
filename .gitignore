@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+build/
+dist/
+*.egg-info/
+release/
+tools/out/
+*.db
+*.db-wal
+*.db-shm
+*.jks
+*.keystore
+*.p12
+key.properties
+.env

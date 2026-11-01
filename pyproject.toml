@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "controlled-chaos"
+version = "1.0.0"
+description = "Controlled Chaos - a local-first personal workspace for tasks, notes, journal, focus and realistic daily planning."
+requires-python = ">=3.10"
+dependencies = ["flet>=1.0"]
+
+[project.optional-dependencies]
+web = ["flet-web>=1.0"]        # local browser mode: loopback server + bundled client (no CDN)
+desktop = ["flet-desktop>=1.0"]  # native window; its client binary is fetched by Flet on first run (needs network ONCE)
+dev = ["pytest>=8"]
+
+[project.scripts]
+controlled-chaos = "controlled_chaos.main:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+controlled_chaos = ["assets/**/*"]   # staged into the package by tools/build_release.py
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+# ---- Flet packaging (flet build apk / windows / linux / macos) --------------------------------
+# Offline-by-design build: the Android INTERNET permission is switched OFF.  If a device build
+# fails to start with it off, that is a finding to resolve (do not silently re-enable it).
+[tool.flet]
+org = "app.controlledchaos"
+product = "Controlled Chaos"
+company = "Controlled Chaos"
+copyright = "Copyright (C) 2026"
+build_number = 1
+icon_background = "#1A1614"          # adaptive-icon / splash ground (ink)
+description = "Local-first tasks, notes, journal, focus timer and realistic daily planning. Works completely offline."
+
+[tool.flet.app]
+path = "src"
+
+[tool.flet.android.permission]
+"android.permission.INTERNET" = false
