@@ -48,6 +48,8 @@ class Shell:
         self.notifier = Notifier(app, select_backend(plat if plat in ("android", "linux", "windows") else None),
                                  on_open=self._open_from_notification)
         self._ring_open = None
+        from .music_ui import MusicPlayer
+        self.music = MusicPlayer(self)
         self._pending_nav = None
 
     # ------------------------------------------------------------------ mode
@@ -324,6 +326,7 @@ class Shell:
                         self.toast(d.title if d.kind in ("focus", "planning", "closure") else f"Reminder: {d.title}")
                     continue
                 self._check_ringing()
+                self.music.sync()
                 s = self.app.focus.active()
                 if s is not None and self.timer_labels:
                     from .focus_view import fmt_clock

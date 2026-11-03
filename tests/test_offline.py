@@ -106,7 +106,8 @@ def test_android_internet_permission_disabled_in_build_config():
     import tomllib
     cfg = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert cfg["tool"]["flet"]["android"]["permission"]["android.permission.INTERNET"] is False
-    assert cfg["project"]["dependencies"] == ["flet>=1.0"]
+    # flet-audio: Flet's first-party local-playback extension (focus music); anything else must fail this test.
+    assert cfg["project"]["dependencies"] == ["flet>=1.0", "flet-audio>=1.0"]
 
 
 def test_fonts_and_texture_are_bundled_locally():

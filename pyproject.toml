@@ -7,7 +7,7 @@ name = "controlled-chaos"
 version = "1.0.0"
 description = "Controlled Chaos - a local-first personal workspace for tasks, notes, journal, focus and realistic daily planning."
 requires-python = ">=3.10"
-dependencies = ["flet>=1.0"]
+dependencies = ["flet>=1.0", "flet-audio>=1.0"]
 
 [project.optional-dependencies]
 web = ["flet-web>=1.0"]        # local browser mode: loopback server + bundled client (no CDN)

@@ -35,6 +35,9 @@ DEFAULT_SETTINGS: dict[str, str] = {
     "snooze_default": "10",
     "task_done_policy": "cancel",     # what a completed task does to its reminder: cancel | keep
     "focus_alerts": "1",
+    "music_track": "bundled:rain",     # bundled:<name> | file:<name in app music folder>
+    "music_volume": "0.5",
+    "music_auto": "0",                # start/stop music with focus sessions (off by default)
     "planning_on": "0",
     "planning_time": "08:30",
     "planning_days": "0,1,2,3,4,5,6",

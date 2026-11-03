@@ -107,8 +107,10 @@ def scan_manifest(pyproject: Path, rep: Report) -> None:
     for d in deps:
         if d in BANNED_DEPENDENCIES:
             rep.add("VIOLATION", "pyproject.toml", f"declares prohibited dependency {d}")
-    if deps != ["flet"]:
-        rep.add("VIOLATION" if set(deps) - {"flet"} else "INFO", "pyproject.toml", f"runtime dependencies: {deps}")
+    # flet-audio is Flet's own first-party audio extension (local playback only; depends only on flet).
+    allowed = {"flet", "flet-audio"}
+    if set(deps) != {"flet"}:
+        rep.add("VIOLATION" if set(deps) - allowed else "INFO", "pyproject.toml", f"runtime dependencies: {deps}")
     perm = data.get("tool", {}).get("flet", {}).get("android", {}).get("permission", {})
     if perm.get("android.permission.INTERNET") is not False:
         rep.add("VIOLATION", "pyproject.toml", "Android INTERNET permission is not explicitly disabled")

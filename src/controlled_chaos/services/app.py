@@ -17,6 +17,7 @@ from .journal_service import JournalService
 from .note_service import NoteService
 from .planner_service import PlannerService
 from .project_service import ProjectService
+from .music_service import MusicService
 from .reminder_service import ReminderService
 from .search_service import SearchService
 from .settings_service import SettingsService
@@ -40,6 +41,7 @@ class App:
         self.calendar = CalendarService(self.ctx)
         self.trash = TrashService(self.ctx, self.tasks, self.notes, self.journal, self.calendar)
         self.planner = PlannerService(self.ctx, self.tasks, self.calendar, self.settings)
+        self.music = MusicService(self.ctx, self.data_path)
         self.reminders = ReminderService(self.ctx, self.tasks, self.calendar, self.focus)
 
     # data management -----------------------------------------------------------

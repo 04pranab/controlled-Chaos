@@ -6,6 +6,7 @@ from typing import Optional
 import flet as ft
 
 from . import theme as T
+from .music_ui import music_block
 
 
 def fmt_clock(seconds: int) -> str:
@@ -51,7 +52,8 @@ def focus_panel(sh, compact: bool = False) -> ft.Control:
         start.expand = True
         brk.expand = True
         return ft.Column([clock, ft.Row([dd]), ft.Row([start, brk], spacing=8),
-                          k.muted(f"Today: {mins} min focused in {n} session{'s' if n != 1 else ''}.")], spacing=10, tight=True)
+                          k.muted(f"Today: {mins} min focused in {n} session{'s' if n != 1 else ''}."), k.rule(), music_block(sh)],
+                         spacing=10, tight=True)
     now = app.ctx.now()
     label = ft.Text(fmt_clock(s.remaining(now)), size=k.fs(52 if not compact else 38), color=p.accent, font_family=T.DISPLAY_BOLD)
     sh.timer_labels.append(label)
@@ -68,7 +70,7 @@ def focus_panel(sh, compact: bool = False) -> ft.Control:
     status = "paused" if s.status == "paused" else "running"
     return ft.Column([k.label(f"{title} - {status}", p.accent), label,
                       k.text(task.title, 14, max_lines=2) if task else k.muted("No task attached"),
-                      *_button_rows(controls)], spacing=8, tight=True)
+                      *_button_rows(controls), k.rule(), music_block(sh)], spacing=8, tight=True)
 
 
 def _enter(sh) -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 import flet as ft
 
 from ..utilities.dates import to_local
+from .autosave import Autosave
 
 
 def _pad(sh):
@@ -82,7 +83,7 @@ def _editor(sh, n) -> ft.Control:
     body = k.field(None, value=n.body, multiline=True, min_lines=10, max_lines=30, hint="Write freely...")
     tags = k.field("Tags (comma separated)", value=", ".join(n.tags))
     proj = k.dropdown("Project", [("", "None")] + [(x.id, x.name) for x in app.projects.list()], n.project_id or "", width=240)
-    status = k.muted("Saved")
+    status = k.muted("Saved when you pause typing.", 11.5)
 
     def save(e=None, quiet=False):
         try:
@@ -90,12 +91,15 @@ def _editor(sh, n) -> ft.Control:
                              tags=[t for t in (tags.value or "").split(",")], project_id=proj.value or None)
         except Exception as exc:
             sh.error(exc)
-            return
+            return False
+        auto.dirty = False
         if not quiet:
+            status.value = "Saved"
             sh.toast("Saved.")
+        return True
 
-    for f in (title, body, tags):
-        f.on_blur = lambda e: save(quiet=True)
+    auto = Autosave(sh, lambda: save(quiet=True), status)
+    auto.attach(title, body, tags)
     proj.on_select = lambda e: save(quiet=True)
 
     def toggle(fn, msg):
@@ -137,5 +141,5 @@ def _editor(sh, n) -> ft.Control:
                   k.button("Archive", toggle(lambda: (app.notes.set_archived(n.id, True), sh.state.__setitem__("note_id", None)), "Archived."), icon=ft.Icons.ARCHIVE_OUTLINED),
                   k.icon_button(ft.Icons.DELETE_OUTLINE, "Delete note", delete)], wrap=True, spacing=8)
     return ft.Column([title, body, tags, ft.Row([proj, link_dd], wrap=True, spacing=8), *link_rows, bar,
-                      k.muted(f"Created {to_local(n.created_at, app.ctx.tz()):%b %d, %H:%M}. Changes are saved when you leave a field.", 11.5)],
+                      status, k.muted(f"Created {to_local(n.created_at, app.ctx.tz()):%b %d, %H:%M}.", 11.5)],
                      spacing=10, scroll=ft.ScrollMode.AUTO, expand=True, horizontal_alignment=ft.CrossAxisAlignment.STRETCH)

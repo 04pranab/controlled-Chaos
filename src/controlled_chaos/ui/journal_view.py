@@ -5,6 +5,7 @@ from datetime import date, timedelta
 
 import flet as ft
 
+from .autosave import Autosave
 from .dialogs import closure_dialog
 
 MOODS = ["calm", "content", "energised", "focused", "tired", "restless", "low", "stressed"]
@@ -34,20 +35,25 @@ def build(sh) -> ft.Control:
             sh.refresh()
         return go
 
+    status = k.muted("Saved when you pause typing.", 11.5)
+
     def save(e=None, quiet=False):
         if not (body.value or acc.value or nxt.value or mood["v"]) and ent is None:
-            return
+            return True
         try:
             app.journal.save_primary(ds, body=body.value or "", mood=mood["v"], accomplishments=acc.value or "",
                                      note_tomorrow=nxt.value or "")
         except Exception as exc:
             sh.error(exc)
-            return
+            return False
+        auto.dirty = False
         if not quiet:
+            auto.status.value = "Saved"
             sh.toast("Saved.")
+        return True
 
-    for f in (body, acc, nxt):
-        f.on_blur = lambda e: save(quiet=True)
+    auto = Autosave(sh, lambda: save(quiet=True), status)
+    auto.attach(body, acc, nxt)
     moods = ft.Row([ft.Chip(label=ft.Text(m), selected=mood["v"] == m, show_checkmark=False, selected_color=p.rule,
                             on_click=pick(m)) for m in MOODS], wrap=True, spacing=4)
 
@@ -81,7 +87,7 @@ def build(sh) -> ft.Control:
                       ft.Row([k.button("Save", save, icon=ft.Icons.SAVE_OUTLINED, primary=True),
                               k.button("Day Closure", lambda e: closure_dialog(sh), icon=ft.Icons.NIGHTLIGHT_OUTLINED)], wrap=True, spacing=8),
                       *([k.label("More from this day")] + extra_rows if extra_rows else []), more,
-                      k.muted("Saved when you leave a field. Day Closure is always optional.", 11.5)], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+                      status, k.muted("Day Closure is always optional.", 11.5)], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
     pad = ft.Padding.symmetric(horizontal=28 if sh.mode() != "narrow" else 16, vertical=20)
     head = k.page_title("A page a day, if you want one", "Journal")
     if sh.mode() == "narrow":
