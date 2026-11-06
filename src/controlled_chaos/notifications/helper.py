@@ -31,7 +31,8 @@ def _src_root() -> Path:
 
 
 def _default_runner(cmd, timeout=15):
-    return subprocess.run(list(cmd), capture_output=True, text=True, timeout=timeout)
+    from .backends import no_window
+    return subprocess.run(list(cmd), capture_output=True, text=True, timeout=timeout, **no_window())
 
 
 # --------------------------------------------------------------------------------- Linux (systemd --user)
@@ -50,7 +51,34 @@ def linux_unit_text(python: str, data_dir: Path) -> str:
         "[Install]\nWantedBy=default.target\n")
 
 
+# The app asks "is the background notifier running?" for every pending reminder every 30 seconds. Each answer used to
+# start a process (`schtasks` / `systemctl`), which blocked the window and, on Windows, flashed a console window.
+# The answer only changes when the person installs or removes the notifier, so remember it for a while.
+_STATUS_TTL = 300.0
+_status_cache: dict = {}
+
+
+def _cached_status(key: str, compute: Callable[[], Tuple[bool, str]]) -> Tuple[bool, str]:
+    import time
+    hit = _status_cache.get(key)
+    if hit and time.monotonic() - hit[0] < _STATUS_TTL:
+        return hit[1]
+    val = compute()
+    _status_cache[key] = (time.monotonic(), val)
+    return val
+
+
+def forget_status() -> None:
+    _status_cache.clear()
+
+
 def linux_status(runner: Callable = _default_runner, config_home: Optional[Path] = None) -> Tuple[bool, str]:
+    if runner is _default_runner and config_home is None:
+        return _cached_status("linux", lambda: _linux_status(runner, config_home))
+    return _linux_status(runner, config_home)
+
+
+def _linux_status(runner: Callable = _default_runner, config_home: Optional[Path] = None) -> Tuple[bool, str]:
     if not shutil.which("systemctl") and runner is _default_runner:
         return False, "Background notifier needs systemd (systemctl). Reminders fire only while the app is open."
     if not linux_unit_path(config_home).is_file():
@@ -99,6 +127,12 @@ def windows_command(python: str, data_dir: Path) -> str:
 
 
 def windows_status(runner: Callable = _default_runner) -> Tuple[bool, str]:
+    if runner is _default_runner:
+        return _cached_status("windows", lambda: _windows_status(runner))
+    return _windows_status(runner)
+
+
+def _windows_status(runner: Callable = _default_runner) -> Tuple[bool, str]:
     if not shutil.which("schtasks") and runner is _default_runner:
         return False, "Background notifier needs Windows Task Scheduler."
     try:
@@ -129,12 +163,14 @@ def uninstall_windows(runner: Callable = _default_runner) -> Result:
 
 
 def install(data_dir: Path) -> Result:
+    forget_status()
     if sys.platform.startswith("win"):
         return install_windows(data_dir)
     return install_linux(data_dir)
 
 
 def uninstall() -> Result:
+    forget_status()
     return uninstall_windows() if sys.platform.startswith("win") else uninstall_linux()
 
 

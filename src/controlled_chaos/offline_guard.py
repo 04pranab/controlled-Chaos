@@ -23,6 +23,7 @@ class OfflineViolation(OSError):
 
 
 _installed = False
+_lan_allowed = False                 # set only by the opt-in Company chat while it is running; see allow_lan()
 _attempts: List[str] = []
 _orig = {}
 
@@ -42,6 +43,26 @@ def _is_local(host: Any) -> bool:
     except ValueError:
         return False                      # a real hostname: would need DNS -> not local
     return ip.is_loopback or ip.is_unspecified
+
+
+def _is_lan(host: Any) -> bool:
+    """Private-network, link-local, loopback or broadcast IP literal. Never a hostname, never a public address."""
+    if not isinstance(host, str):
+        return False
+    if host == "255.255.255.255":
+        return True
+    try:
+        ip = ipaddress.ip_address(host.split("%")[0])
+    except ValueError:
+        return False
+    return ip.is_loopback or ((ip.is_private or ip.is_link_local) and not ip.is_global)
+
+
+def allow_lan(on: bool) -> None:
+    """Let UDP datagrams (sendto) reach the local network. Used only by Company chat while it is switched on.
+    Connections, DNS lookups and every public address stay blocked regardless."""
+    global _lan_allowed
+    _lan_allowed = bool(on)
 
 
 def _deny(what: str, target: Any) -> None:
@@ -90,7 +111,8 @@ def install() -> None:
 
     def sendto(self, data, *args):
         addr = args[-1] if args else None
-        if addr is not None and not _addr_ok(self, addr):
+        if addr is not None and not _addr_ok(self, addr) and not (
+                _lan_allowed and self.type == socket.SOCK_DGRAM and isinstance(addr, tuple) and addr and _is_lan(addr[0])):
             _deny("sendto", addr)
         return _orig["sendto"](self, data, *args)
 
@@ -112,6 +134,7 @@ def uninstall() -> None:           # used by tests only
     socket.create_connection = _orig["create_connection"]
     socket.socket.sendto = _orig["sendto"]
     _installed = False
+    allow_lan(False)
 
 
 def is_installed() -> bool:

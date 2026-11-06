@@ -15,7 +15,7 @@ from pathlib import Path
 SR = 16000
 DUR = 24
 N = SR * DUR
-OUT = Path(__file__).resolve().parents[1] / "assets" / "music"
+OUT = Path(__file__).resolve().parents[1] / "src" / "assets" / "music"
 
 
 def write(name, buf, peak=0.5):

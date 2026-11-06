@@ -37,6 +37,8 @@ DEFAULT_SETTINGS: dict[str, str] = {
     "focus_alerts": "1",
     "music_track": "bundled:rain",     # bundled:<name> | file:<name in app music folder>
     "music_volume": "0.5",
+    "company_on": "0",                # LAN chat: off until the person turns it on
+    "company_name": "",               # the only thing about you that Company shares
     "music_auto": "0",                # start/stop music with focus sessions (off by default)
     "planning_on": "0",
     "planning_time": "08:30",

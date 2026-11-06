@@ -85,7 +85,10 @@ class Notifier:
         rs = self.app.reminders
         for r in rs.unscheduled():
             res = self.backend.schedule(r)
-            rs.record_os_schedule(r.id, res.ok, "" if res.ok else res.detail)
+            err = "" if res.ok else res.detail[:300]
+            if not res.ok and r.schedule_error == err:
+                continue                                    # same answer as last time: no need to write it again
+            rs.record_os_schedule(r.id, res.ok, err)
 
     def poll(self, now: Optional[int] = None) -> List[Delivery]:
         rs = self.app.reminders

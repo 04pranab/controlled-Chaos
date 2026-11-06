@@ -8,7 +8,7 @@ WAV = b"RIFF" + b"\x00" * 200
 def test_bundled_tracks_exist_as_files():
     from controlled_chaos.services.music_service import BUNDLED
     from pathlib import Path
-    root = Path(__file__).resolve().parents[1] / "assets" / "music"
+    root = Path(__file__).resolve().parents[1] / "src" / "assets" / "music"
     for key, _, _ in BUNDLED:
         assert (root / f"{key}.wav").stat().st_size > 100_000
 

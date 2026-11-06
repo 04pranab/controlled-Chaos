@@ -16,5 +16,5 @@ def chunk(t, d):
     c = struct.pack(">I", len(d)) + t + d
     return c + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
 png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", W, H, 8, 6, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
-Path(__file__).parent.joinpath("assets/paper_texture.png").write_bytes(png)
+Path(__file__).resolve().parents[1].joinpath("src/assets/paper_texture.png").write_bytes(png)
 print("wrote", len(png), "bytes")

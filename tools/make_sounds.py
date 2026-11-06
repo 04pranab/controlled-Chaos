@@ -12,7 +12,7 @@ import wave
 from pathlib import Path
 
 SR = 22050
-OUT = Path(__file__).resolve().parents[1] / "assets" / "sounds"
+OUT = Path(__file__).resolve().parents[1] / "src" / "assets" / "sounds"
 
 
 def tone(freq, dur, amp, attack=0.008, decay=6.0, harmonics=((1, 1.0), (2, 0.25), (3, 0.08))):

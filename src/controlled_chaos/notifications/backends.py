@@ -41,8 +41,19 @@ class Result:
     detail: str = ""
 
 
+def no_window() -> dict:
+    """Extra subprocess arguments that stop Windows from flashing a console window for every helper process
+    (PowerShell for toasts, audio players, schtasks).  Empty on other platforms."""
+    if sys.platform != "win32":
+        return {}
+    si = subprocess.STARTUPINFO()
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 0                                   # SW_HIDE
+    return {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000), "startupinfo": si}
+
+
 def _run(cmd: Sequence[str], timeout: float = 8.0, **kw) -> subprocess.CompletedProcess:
-    return subprocess.run(list(cmd), capture_output=True, text=True, timeout=timeout, **kw)
+    return subprocess.run(list(cmd), capture_output=True, text=True, timeout=timeout, **no_window(), **kw)
 
 
 class Backend:
@@ -90,7 +101,7 @@ def _play_with_cli(path: Path, loops: int, stop: Optional[threading.Event], gap:
                     if stop is not None and stop.is_set():
                         return
                     try:
-                        subprocess.run(build(path), capture_output=True, timeout=30)
+                        subprocess.run(build(path), capture_output=True, timeout=30, **no_window())
                     except Exception:
                         return
                     if stop is not None:
@@ -134,7 +145,7 @@ class LinuxBackend(Backend):
                     cmd += ["-w"]
                 cmd += [n.title, n.body]
                 try:
-                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, **no_window())
                 except OSError as exc:
                     return Result(False, f"notify-send could not start: {exc}")
                 try:

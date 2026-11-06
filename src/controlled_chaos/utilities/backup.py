@@ -153,7 +153,7 @@ def delete_all_data(db: Database, confirm: bool = False, data_dir: Optional[Path
         raise BackupError("deletion must be explicitly confirmed")
     rep = WipeReport()
     with db.transaction() as c:
-        for t in ["note_tags", "note_links", "notes", "journal_entries", "focus_sessions", "calendar_events",
+        for t in ["company_message", "company", "note_tags", "note_links", "notes", "journal_entries", "focus_sessions", "calendar_events",
                   "inbox_items", "duration_observations", "reminders", "notification_log", "tasks", "projects", "settings"]:
             rep.deleted[t] = c.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
             c.execute(f"DELETE FROM {t}")

@@ -38,7 +38,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as td:
         stage = Path(td) / "src"
         shutil.copytree(ROOT / "src", stage / "src", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        shutil.copytree(ROOT / "assets", stage / "src" / "controlled_chaos" / "assets")
+        shutil.copytree(ROOT / "src" / "assets", stage / "src" / "controlled_chaos" / "assets", dirs_exist_ok=True)
         shutil.copy(ROOT / "pyproject.toml", stage / "pyproject.toml")
         dist = Path(td) / "dist"
         wh = Path(td) / "wheelhouse"
@@ -50,7 +50,7 @@ def main() -> None:
         # source archive of the project (no caches, no outputs)
         sdist = REL / "desktop" / f"controlled-chaos-{VERSION}-source.tar.gz"
         with tarfile.open(sdist, "w:gz") as t:
-            for item in ("src", "assets", "assets_src", "tools", "tests", "pyproject.toml"):
+            for item in ("src", "assets_src", "tools", "tests", "pyproject.toml"):
                 t.add(ROOT / item, arcname=f"controlled-chaos-{VERSION}/{item}",
                       filter=lambda ti: None if any(x in ti.name for x in ("__pycache__", ".pyc", "tools/out", ".pytest_cache")) else ti)
         bundle = Path(td) / f"controlled-chaos-{VERSION}-linux-x86_64-{PYTAG}"
@@ -59,12 +59,12 @@ def main() -> None:
         for f in ("install.sh", "uninstall.sh"):
             shutil.copy(ROOT / "tools" / "linux" / f, bundle / f)
             (bundle / f).chmod(0o755)
-        shutil.copy(ROOT / "assets" / "brand" / "app_icon_256.png", bundle / "controlled-chaos.png")
+        shutil.copy(ROOT / "src" / "assets" / "brand" / "app_icon_256.png", bundle / "controlled-chaos.png")
         out = REL / "desktop" / f"{bundle.name}.tar.gz"
         with tarfile.open(out, "w:gz") as t:
             t.add(bundle, arcname=bundle.name)
         shutil.copy(whl, REL / "desktop" / whl.name)
-    shutil.copytree(ROOT / "assets", REL / "assets", dirs_exist_ok=True,
+    shutil.copytree(ROOT / "src" / "assets", REL / "assets", dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns("fonts", "sounds", "paper_texture.png"))
     sums = [f"{sha(p)}  {p.relative_to(REL)}" for p in sorted(REL.rglob("*")) if p.is_file() and "documentation" not in p.parts]
     (REL / "SHA256SUMS").write_text("\n".join(sums) + "\n")

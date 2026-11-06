@@ -21,7 +21,7 @@ BANNED_IMPORTS = {
     "socketserver", "firebase_admin", "supabase", "sentry_sdk", "posthog", "mixpanel", "analytics",
     "openai", "anthropic", "google.cloud", "boto3", "pymongo", "psycopg2", "mysql",
 }
-SOCKET_ALLOWED_IN = {"offline_guard.py"}
+SOCKET_ALLOWED_IN = {"offline_guard.py", "company_net.py"}   # company_net.py: the opt-in, LAN-only chat transport
 BANNED_DEPENDENCIES = {"firebase-admin", "supabase", "requests", "httpx", "aiohttp", "sentry-sdk", "posthog",
                        "mixpanel", "openai", "anthropic", "boto3", "pymongo", "psycopg2", "google-cloud-storage"}
 NETWORKY_IN_TREE = {"httpx", "httpcore", "oauthlib", "websockets", "uvicorn", "fastapi", "requests", "urllib3",
@@ -108,7 +108,7 @@ def scan_manifest(pyproject: Path, rep: Report) -> None:
         if d in BANNED_DEPENDENCIES:
             rep.add("VIOLATION", "pyproject.toml", f"declares prohibited dependency {d}")
     # flet-audio is Flet's own first-party audio extension (local playback only; depends only on flet).
-    allowed = {"flet", "flet-audio"}
+    allowed = {"flet", "flet-audio", "cryptography"}   # cryptography: local AES-GCM for Company chat; no network code
     if set(deps) != {"flet"}:
         rep.add("VIOLATION" if set(deps) - allowed else "INFO", "pyproject.toml", f"runtime dependencies: {deps}")
     perm = data.get("tool", {}).get("flet", {}).get("android", {}).get("permission", {})
@@ -143,7 +143,7 @@ def scan_dependency_tree(rep: Report, root: str = "flet") -> None:
 def run_audit(project_root: Path) -> Report:
     rep = Report()
     scan_source(project_root / "src" / "controlled_chaos", rep)
-    scan_assets(project_root / "assets", rep)
+    scan_assets(project_root / "src" / "assets" if (project_root / "src" / "assets").is_dir() else project_root / "assets", rep)
     scan_manifest(project_root / "pyproject.toml", rep)
     scan_dependency_tree(rep)
     return rep

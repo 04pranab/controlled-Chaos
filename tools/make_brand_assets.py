@@ -3,7 +3,7 @@
     python tools/make_brand_assets.py
 
 Reads  assets_src/masters/controlled-chaos-logo-sheet.original.png   (never modified; checksum in SHA256SUMS)
-Writes assets/brand/*, assets/icon*.png|ico, assets/splash*.png
+Writes src/assets/brand/*, src/assets/icon*.png|ico, src/assets/splash*.png  (flet build looks for assets next to main.py)
 
 Geometry is detected from the pixels, not hard-coded, and asserted, so a wrong crop fails loudly.
 Android adaptive icons: 108dp canvas, the visible mask is the centre 72dp and Google's safe zone is the centre 66dp
@@ -18,7 +18,7 @@ from scipy import ndimage as ndi
 
 ROOT = Path(__file__).resolve().parents[1]
 MASTER = ROOT / "assets_src" / "masters" / "controlled-chaos-logo-sheet.original.png"
-A = ROOT / "assets"
+A = ROOT / "src" / "assets"
 B = A / "brand"
 INK, PAPER = (26, 22, 20), (246, 240, 228)
 

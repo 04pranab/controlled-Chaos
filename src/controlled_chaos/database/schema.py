@@ -206,3 +206,25 @@ CREATE TABLE notification_log (
 );
 CREATE INDEX idx_nlog_fired ON notification_log(fired_ts);
 """
+
+
+SCHEMA_V3 = """
+-- Company: an end-to-end encrypted group chat between people on the same local network (see services/company_service.py).
+-- `secret` is the group's join code; it never leaves this device except when the owner chooses to share it.
+CREATE TABLE company (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    secret TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+);
+CREATE TABLE company_message (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL REFERENCES company(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL,
+    body TEXT NOT NULL,
+    ts INTEGER NOT NULL,
+    mine INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX idx_company_message ON company_message(company_id, ts);
+"""

@@ -11,13 +11,14 @@ import sqlite3
 from pathlib import Path
 from typing import Callable, Optional, Sequence, Union
 
-from .schema import SCHEMA_V1, SCHEMA_V2
+from .schema import SCHEMA_V1, SCHEMA_V2, SCHEMA_V3
 
 Migration = tuple[int, Union[str, Callable[[sqlite3.Connection], None]]]
 
 MIGRATIONS: list[Migration] = [
     (1, SCHEMA_V1),
     (2, SCHEMA_V2),
+    (3, SCHEMA_V3),
 ]
 
 LATEST_VERSION = MIGRATIONS[-1][0]

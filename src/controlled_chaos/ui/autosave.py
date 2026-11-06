@@ -12,7 +12,7 @@ from typing import Callable
 
 
 class Autosave:
-    def __init__(self, sh, save: Callable[[], bool], status, delay: float = 0.8):
+    def __init__(self, sh, save: Callable[[], bool], status, delay: float = 0.6):
         self.sh, self.save, self.status, self.delay = sh, save, status, delay
         self._token = 0
         self.dirty = False
@@ -24,6 +24,8 @@ class Autosave:
             f.on_blur = (lambda e, prev=prev: (prev(e) if prev else None, self.flush()))
 
     def _say(self, text: str) -> None:
+        if getattr(self.status, "value", None) == text:      # no UI update (and no round trip) when nothing changed
+            return
         try:
             self.status.value = text
             self.status.update()

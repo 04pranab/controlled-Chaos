@@ -107,14 +107,14 @@ def test_android_internet_permission_disabled_in_build_config():
     cfg = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert cfg["tool"]["flet"]["android"]["permission"]["android.permission.INTERNET"] is False
     # flet-audio: Flet's first-party local-playback extension (focus music); anything else must fail this test.
-    assert cfg["project"]["dependencies"] == ["flet>=1.0", "flet-audio>=1.0"]
+    assert cfg["project"]["dependencies"] == ["flet>=1.0", "flet-audio>=1.0", "cryptography>=42"]   # cryptography: local AES-GCM only
 
 
 def test_fonts_and_texture_are_bundled_locally():
     for f in ("fonts/CrimsonPro-Regular.ttf", "fonts/InstrumentSans-Regular.ttf", "paper_texture.png"):
-        assert (ROOT / "assets" / f).stat().st_size > 1000
+        assert (ROOT / "src" / "assets" / f).stat().st_size > 1000
     from controlled_chaos.ui import theme
-    assert all((ROOT / "assets" / v).exists() for v in theme.FONTS.values())
+    assert all((ROOT / "src" / "assets" / v).exists() for v in theme.FONTS.values())
 
 
 # ----------------------------------------------------------------- self test

@@ -451,3 +451,41 @@ def test_helper_once_delivers_in_a_separate_process(tmp_path):
     r2 = subprocess.run([sys.executable, "-m", "controlled_chaos.notifications.helper", "--once", "--data-dir", str(tmp_path)],
                         env=env, capture_output=True, text=True, timeout=30)
     assert "delivered 0" in r2.stdout                                # second run: nothing left, no duplicate
+
+
+# ---- regressions: the 30-second reminder sync must not start a process per reminder (blocked the window, flashed
+# ---- a console on Windows)
+def test_status_probe_is_cached(monkeypatch):
+    from controlled_chaos.notifications import helper
+    helper.forget_status()
+    calls = []
+    for _ in range(5):
+        helper._cached_status("t", lambda: calls.append(1) or (False, "x"))
+    assert len(calls) == 1
+    helper.forget_status()
+    helper._cached_status("t", lambda: calls.append(1) or (False, "x"))
+    assert len(calls) == 2
+
+
+def test_unchanged_schedule_failure_is_not_rewritten(app):
+    from controlled_chaos.notifications.backends import NullBackend
+    from controlled_chaos.notifications.notifier import Notifier
+    b = NullBackend(can_show=True, can_sound=True, survives=False)      # cannot schedule while closed: always "fails"
+    n = Notifier(app, b)
+    t = app.tasks.create("t")
+    app.reminders.set_task_reminder(t.id, T0 + 600)
+    n.sync()
+    assert app.reminders.unscheduled()                                  # precondition: something is waiting
+    writes = []
+    orig = app.reminders.record_os_schedule
+    app.reminders.record_os_schedule = lambda *a, **k: (writes.append(a), orig(*a, **k))
+    n.sync()
+    n.sync()
+    assert writes == []
+
+
+def test_no_window_flags_only_on_windows():
+    import sys
+    from controlled_chaos.notifications.backends import no_window
+    if sys.platform != "win32":
+        assert no_window() == {}

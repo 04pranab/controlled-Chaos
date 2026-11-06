@@ -26,6 +26,7 @@ NAV = [  # key, label, icon, selected icon
     ("journal", "Journal", ft.Icons.AUTO_STORIES_OUTLINED, ft.Icons.AUTO_STORIES),
     ("projects", "Projects", ft.Icons.FOLDER_OUTLINED, ft.Icons.FOLDER),
     ("calendar", "Calendar", ft.Icons.CALENDAR_MONTH_OUTLINED, ft.Icons.CALENDAR_MONTH),
+    ("company", "Company", ft.Icons.FORUM_OUTLINED, ft.Icons.FORUM),
     ("archive", "Archive", ft.Icons.ARCHIVE_OUTLINED, ft.Icons.ARCHIVE),
 ]
 MOBILE_NAV = ["desk", "tasks", "notes", "journal", "calendar"]
@@ -49,7 +50,10 @@ class Shell:
                                  on_open=self._open_from_notification)
         self._ring_open = None
         from .music_ui import MusicPlayer
+        from ..services.company_net import CompanyRuntime
         self.music = MusicPlayer(self)
+        self.company_rt = CompanyRuntime(self.app.company)
+        self.company_ctl = None
         self._pending_nav = None
 
     # ------------------------------------------------------------------ mode
@@ -105,7 +109,7 @@ class Shell:
         body = self._build_view()
         mode = self._mode
         if mode == "narrow":
-            pg.floating_action_button = ft.FloatingActionButton(
+            pg.floating_action_button = None if self.view == "company" else ft.FloatingActionButton(    # it would cover Send
                 icon=ft.Icons.ADD, tooltip="Quick capture (Ctrl+N)", bgcolor=p.accent, foreground_color=p.on_accent,
                 on_click=lambda e: self.capture_dialog(), shape=ft.RoundedRectangleBorder(radius=4))
             sel = MOBILE_NAV.index(self.view) if self.view in MOBILE_NAV else 0
@@ -129,11 +133,11 @@ class Shell:
         return ft.SafeArea(ft.Container(content, expand=True, bgcolor=k.p.bg, **kwargs), expand=True)
 
     def _build_view(self) -> ft.Control:
-        from . import (archive_view, calendar_view, desk, inbox_view, journal_view, notes_view, projects_view,
+        from . import (archive_view, calendar_view, company_view, desk, inbox_view, journal_view, notes_view, projects_view,
                        settings_view, tasks_view)
         views = {"desk": desk.build, "inbox": inbox_view.build, "tasks": tasks_view.build, "notes": notes_view.build,
                  "journal": journal_view.build, "projects": projects_view.build, "calendar": calendar_view.build,
-                 "archive": archive_view.build, "settings": settings_view.build}
+                 "archive": archive_view.build, "settings": settings_view.build, "company": company_view.build}
         try:
             return views[self.view](self)
         except Exception:
@@ -188,7 +192,7 @@ class Shell:
         k, p = self.kit, self.kit.p
         pending = self.app.capture.pending_count()
         extra = [("inbox", f"Inbox ({pending})" if pending else "Inbox"), ("projects", "Projects"),
-                 ("archive", "Archive"), ("settings", "Settings")]
+                 ("company", "Company"), ("archive", "Archive"), ("settings", "Settings")]
         menu = ft.PopupMenuButton(icon=ft.Icons.MORE_VERT, icon_color=p.muted, tooltip="More",
                                   items=[ft.PopupMenuItem(content=ft.Text(label), on_click=lambda e, key=key: self.navigate(key))
                                          for key, label in extra])
@@ -327,6 +331,10 @@ class Shell:
                     continue
                 self._check_ringing()
                 self.music.sync()
+                new_msgs = self.company_rt.tick()
+                if new_msgs:
+                    from . import company_view
+                    company_view.on_incoming(self, new_msgs)
                 s = self.app.focus.active()
                 if s is not None and self.timer_labels:
                     from .focus_view import fmt_clock
